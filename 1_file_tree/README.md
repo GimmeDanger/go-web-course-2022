@@ -19,7 +19,7 @@ ok      coursera/homework/tree     0.127s
 ```
 
 ```
-go run main.go . -f
+$ go run main.go . -f
 ├───main.go (1881b)
 ├───main_test.go (1318b)
 └───testdata
@@ -37,7 +37,7 @@ go run main.go . -f
 	│	└───empty.txt (empty)
 	└───zzfile.txt (empty)
 
-go run main.go .
+$ go run main.go .
 └───testdata
 	├───project
 	├───static
