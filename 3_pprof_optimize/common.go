@@ -1,4 +1,4 @@
-package main
+package hw3
 
 import (
 	"encoding/json"

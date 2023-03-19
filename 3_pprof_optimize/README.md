@@ -1,5 +1,52 @@
 # Week 3: parallel pipeline
 
+## Запуск
+
+```
+# Собираем бенчмарки без GC
+$ GOGC=off go test -bench . -benchmem -cpuprofile cpu.out 
+
+# Визуализация в браузере
+go tool pprof -http=:8083 hw3.test cpu.out  
+
+```
+
+## Оптимизации
+
+Горячие места: regexp MatchString 57.50%, json Unmarshal 30.90%
+
+1) Заменил динамическую структуру map[string]interface{} на фиксированную, сгенерированную по тестовым данным через https://mholt.github.io/json-to-go/: x1.37 speed up, x1.21 less allocs
+```
+BenchmarkSlow-8               60          24663395 ns/op        19837236 B/op     189731 allocs/op
+BenchmarkFast-8               58          17955997 ns/op        19515451 B/op     155814 allocs/op
+
+```
+
+2) Заменил encoding/json на easyjson: x1.65 speed up, x1.27 less allocs
+```
+BenchmarkSlow-8               61          24395168 ns/op        19837351 B/op     189731 allocs/op
+BenchmarkFast-8               78          14714402 ns/op        19128633 B/op     148814 allocs/op
+
+```
+
+Горячие места: regexp MatchString 83.90%, easyjson Unmarshal 3.39%. С unmarshal можно остановиться
+
+3) Заменяем regexp на strings.Contains: x7.5 speed up, x14.8 less allocs
+```
+BenchmarkSlow-8               54          24320202 ns/op        19837374 B/op     189731 allocs/op
+BenchmarkFast-8              500           3214775 ns/op         5623948 B/op      12814 allocs/op
+```
+
+Горячие места: browserChecker (метод где раньше был regexp) 12.32%, easyjson Unmarshal 38.41%. Уже особо ничего не пооптимизировать без параллельности.
+
+4) Заменяем линейный поиск seenBrowsers на map[string]bool, убираем число циклов, лишние аллокации: x8.1 speed up
+```
+BenchmarkSlow-8               55          24856277 ns/op        19837355 B/op     189731 allocs/op
+BenchmarkFast-8              546           3086202 ns/op         5229894 B/op      12804 allocs/op
+```
+
+## Исходное условие задания
+
 Есть функция, которая что-то там ищет по файлу. Но делает она это не очень быстро. Надо её оптимизировать.
 
 Задание на работу с профайлером pprof.
